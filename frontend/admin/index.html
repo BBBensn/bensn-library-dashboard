@@ -41,6 +41,7 @@
 .wish-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.6; }
 .wish-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
 .lib-empty { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+.lib-muted { color: var(--muted); }
 
 .wish-actions { display: flex; align-items: center; gap: 8px; }
 .delete-btn {
@@ -56,37 +57,6 @@
 }
 .delete-btn:hover { border-color: rgba(255,0,81,.4); color: var(--accent-red); }
 
-.dropzone {
-  border: 1px dashed var(--border);
-  border-radius: 16px;
-  padding: 2.5rem 1.5rem;
-  text-align: center;
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  color: var(--muted);
-  cursor: pointer;
-  transition: border-color .15s, color .15s;
-  margin-bottom: 1.5rem;
-}
-.dropzone:hover, .dropzone.dragover { border-color: var(--accent-blue); color: var(--text); }
-
-.img-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: .75rem 1rem;
-  margin-bottom: 8px;
-}
-.img-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #000; }
-.img-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 1rem; }
-.img-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; }
-.img-filename-preview { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent-blue); word-break: break-all; flex: 1; }
-.img-name-input { width: 160px; flex-shrink: 0; }
-.batch-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; }
-
 .submit-btn {
   padding: .7rem 1.5rem;
   border-radius: 12px;
@@ -101,6 +71,74 @@
 }
 .submit-btn:active { transform: scale(.98); opacity: .85; }
 .submit-btn:disabled { opacity: .4; pointer-events: none; }
+
+.ghost-btn {
+  padding: .6rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.ghost-btn:hover { border-color: var(--border-hover); }
+
+.export-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.7; }
+.export-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+/* ── Canvas-Karten ── */
+.canvas-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.canvas-card-header { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.canvas-name-input { width: 170px; }
+.canvas-size-select { width: 190px; }
+.canvas-custom-size { display: flex; align-items: center; gap: .4rem; }
+.canvas-custom-size .text-input { width: 72px; }
+.canvas-card-header .delete-btn { margin-left: auto; }
+
+.canvas-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  cursor: grab;
+  touch-action: none;
+  background-image:
+    linear-gradient(45deg, #1c1c1e 25%, transparent 25%), linear-gradient(-45deg, #1c1c1e 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1c1c1e 75%), linear-gradient(-45deg, transparent 75%, #1c1c1e 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  background-color: #0a0a0b;
+}
+.canvas-frame.dragging { cursor: grabbing; }
+.canvas-frame.empty {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
+  text-align: center; cursor: pointer; padding: 1rem;
+}
+.canvas-frame img { position: absolute; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+
+.canvas-replace-btn {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  background: rgba(0,0,0,.65); border: 1px solid rgba(255,255,255,.2); color: #fff;
+  font-family: 'DM Mono', monospace; font-size: 10px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+}
+
+.canvas-controls { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-bottom: .85rem; align-items: end; }
+.canvas-slider-group { display: flex; flex-direction: column; gap: 5px; min-width: 130px; }
+.canvas-slider-group label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.canvas-slider-group input[type=range] { accent-color: var(--accent-blue); }
+.canvas-bw-toggle { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
+
+.img-filename-preview { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent-blue); word-break: break-all; }
 </style>
 </head>
 <body>
@@ -135,16 +173,15 @@
   </section>
 
   <section class="tab-section" id="tab-export">
-    <div class="dropzone" id="dropzone">
-      Bilder hierher ziehen oder klicken zum Auswählen<br>
-      (Größe wird automatisch aus der Bilddatei gelesen)
+    <div class="export-hint">
+      Pro Bild eine Canvas anlegen, Bild reinziehen, mit der Maus verschieben und mit dem Zoom-Regler skalieren.
+      Effekte gelten nur für das jeweilige Bild. Nichts wird hochgeladen — alles läuft lokal im Browser.
     </div>
-    <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
-    <div id="batchList"><div class="lib-empty">Noch keine Bilder hinzugefügt.</div></div>
-    <div class="batch-actions">
-      <span class="lib-empty" id="batchCount"></span>
-      <button class="submit-btn" id="downloadAllBtn" disabled>Alle herunterladen</button>
+    <div class="export-toolbar">
+      <button class="ghost-btn" id="addCanvasBtn">+ Neue Canvas</button>
+      <button class="submit-btn" id="exportAllBtn" disabled>Alle exportieren</button>
     </div>
+    <div id="canvasList"><div class="lib-empty">Noch keine Canvas hinzugefügt.</div></div>
   </section>
 
   <footer>
@@ -248,99 +285,301 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
-/* ── Bild-Export (rein clientseitig, nichts wird hochgeladen) ── */
-let batchImages = [];
+/* ── Bild-Export: Canvas-Editor (rein clientseitig, nichts wird hochgeladen) ── */
+const SIZE_PRESETS = {
+  poster:   { label: 'Poster (2:3) 1000×1500',    w: 1000, h: 1500 },
+  backdrop: { label: 'Backdrop (16:9) 1920×1080', w: 1920, h: 1080 },
+  thumb:    { label: 'Thumb (16:9) 1280×720',     w: 1280, h: 720 },
+  banner:   { label: 'Banner (5.4:1) 1000×185',   w: 1000, h: 185 },
+  logo:     { label: 'Logo 800×310',              w: 800,  h: 310 },
+  custom:   { label: 'Benutzerdefiniert',         w: 1000, h: 1000 },
+};
+const PREVIEW_MAX = 260;
+
+let canvasCards = [];
 
 function sanitizeName(name) {
   return (name || '').trim().replace(/[\/\\:*?"<>|]/g, '');
 }
 
-function filenameFor(img) {
-  const ext = img.file.name.includes('.') ? img.file.name.split('.').pop() : 'png';
-  const base = sanitizeName(img.name) || 'unbenannt';
-  return `${base}_${img.width}x${img.height}.${ext}`;
+function filenameFor(card) {
+  const base = sanitizeName(card.name) || 'unbenannt';
+  return `${base}_${card.width}x${card.height}.png`;
 }
 
-function renderBatch() {
-  const el = document.getElementById('batchList');
-  const btn = document.getElementById('downloadAllBtn');
-  const count = document.getElementById('batchCount');
-  if (!batchImages.length) {
-    el.innerHTML = '<div class="lib-empty">Noch keine Bilder hinzugefügt.</div>';
-    btn.disabled = true;
-    count.textContent = '';
+function filterString(card) {
+  return `grayscale(${card.grayscale ? 100 : 0}%) contrast(${card.contrast}%) brightness(${card.brightness}%) saturate(${card.saturation}%)`;
+}
+
+function addCard() {
+  canvasCards.push({
+    id: crypto.randomUUID(),
+    name: '', sizeKey: 'poster', width: SIZE_PRESETS.poster.w, height: SIZE_PRESETS.poster.h,
+    img: null, imgUrl: null, naturalW: 0, naturalH: 0,
+    scale: 1, offsetX: 0, offsetY: 0,
+    grayscale: false, contrast: 100, brightness: 100, saturation: 100,
+  });
+  renderCards();
+}
+
+function cardHtml(card) {
+  const aspect = card.width / card.height;
+  const previewW = Math.min(PREVIEW_MAX, card.width);
+  const previewH = previewW / aspect;
+  return `
+    <div class="canvas-card">
+      <div class="canvas-card-header">
+        <input class="text-input canvas-name-input" data-name-id="${card.id}" placeholder="Name (z.B. Regisseur)" value="${escapeHtml(card.name)}">
+        <select class="text-input canvas-size-select" data-size-id="${card.id}">
+          ${Object.entries(SIZE_PRESETS).map(([key, p]) => `<option value="${key}" ${card.sizeKey === key ? 'selected' : ''}>${p.label}</option>`).join('')}
+        </select>
+        ${card.sizeKey === 'custom' ? `
+          <div class="canvas-custom-size">
+            <input class="text-input" type="number" min="10" data-custom-w-id="${card.id}" value="${card.width}">
+            <span class="lib-muted">×</span>
+            <input class="text-input" type="number" min="10" data-custom-h-id="${card.id}" value="${card.height}">
+          </div>` : ''}
+        <button class="delete-btn" data-remove-card-id="${card.id}" title="Canvas entfernen">✕</button>
+      </div>
+
+      <div class="canvas-frame ${card.img ? '' : 'empty'}" data-frame-id="${card.id}" style="width:${previewW}px;height:${previewH}px" ${card.img ? '' : `data-empty-trigger="${card.id}"`}>
+        ${card.img ? `
+          <img data-img-id="${card.id}" src="${card.imgUrl}" style="filter:${filterString(card)}">
+          <button class="canvas-replace-btn" data-replace-id="${card.id}">Bild ersetzen</button>
+        ` : 'Bild hierher ziehen<br>oder klicken'}
+      </div>
+      <input type="file" accept="image/*" style="display:none" data-file-input-id="${card.id}">
+
+      ${card.img ? `
+      <div class="canvas-controls">
+        <div class="canvas-slider-group">
+          <label>Zoom</label>
+          <input type="range" min="0.3" max="3" step="0.01" value="${card.scale}" data-zoom-id="${card.id}">
+        </div>
+        <div class="canvas-slider-group">
+          <label>Kontrast</label>
+          <input type="range" min="0" max="200" value="${card.contrast}" data-contrast-id="${card.id}">
+        </div>
+        <div class="canvas-slider-group">
+          <label>Helligkeit</label>
+          <input type="range" min="0" max="200" value="${card.brightness}" data-brightness-id="${card.id}">
+        </div>
+        <div class="canvas-slider-group">
+          <label>Sättigung</label>
+          <input type="range" min="0" max="200" value="${card.saturation}" data-saturation-id="${card.id}">
+        </div>
+        <label class="canvas-bw-toggle">
+          <input type="checkbox" data-bw-id="${card.id}" ${card.grayscale ? 'checked' : ''}> Schwarzweiß
+        </label>
+      </div>` : ''}
+
+      <div class="img-filename-preview" data-filename-id="${card.id}">${filenameFor(card)}</div>
+    </div>
+  `;
+}
+
+function attachFrameDrag(frameEl, card) {
+  let dragging = false, startX = 0, startY = 0, startOffX = 0, startOffY = 0;
+  frameEl.addEventListener('pointerdown', (e) => {
+    if (!card.img) return;
+    dragging = true;
+    frameEl.setPointerCapture(e.pointerId);
+    frameEl.classList.add('dragging');
+    startX = e.clientX; startY = e.clientY;
+    startOffX = card.offsetX; startOffY = card.offsetY;
+  });
+  frameEl.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const previewScale = frameEl.clientWidth / card.width;
+    card.offsetX = startOffX + (e.clientX - startX) / previewScale;
+    card.offsetY = startOffY + (e.clientY - startY) / previewScale;
+    applyImageTransform(card);
+  });
+  ['pointerup', 'pointercancel'].forEach(evt => frameEl.addEventListener(evt, () => {
+    dragging = false;
+    frameEl.classList.remove('dragging');
+  }));
+}
+
+function applyImageTransform(card) {
+  const frameEl = document.querySelector(`[data-frame-id="${card.id}"]`);
+  const imgEl = document.querySelector(`[data-img-id="${card.id}"]`);
+  if (!frameEl || !imgEl || !card.img) return;
+  const previewScale = frameEl.clientWidth / card.width;
+  const baseScale = Math.max(card.width / card.naturalW, card.height / card.naturalH);
+  const dispW = card.naturalW * baseScale * card.scale;
+  const dispH = card.naturalH * baseScale * card.scale;
+  const left = (card.width - dispW) / 2 + card.offsetX;
+  const top = (card.height - dispH) / 2 + card.offsetY;
+  imgEl.style.width = (dispW * previewScale) + 'px';
+  imgEl.style.height = (dispH * previewScale) + 'px';
+  imgEl.style.left = (left * previewScale) + 'px';
+  imgEl.style.top = (top * previewScale) + 'px';
+}
+
+function applyImageFilter(card) {
+  const imgEl = document.querySelector(`[data-img-id="${card.id}"]`);
+  if (imgEl) imgEl.style.filter = filterString(card);
+}
+
+function renderCards() {
+  const el = document.getElementById('canvasList');
+  const exportBtn = document.getElementById('exportAllBtn');
+  if (!canvasCards.length) {
+    el.innerHTML = '<div class="lib-empty">Noch keine Canvas hinzugefügt.</div>';
+    exportBtn.disabled = true;
     return;
   }
-  btn.disabled = false;
-  count.textContent = `${batchImages.length} Bild${batchImages.length === 1 ? '' : 'er'}`;
-  el.innerHTML = batchImages.map(img => `
-    <div class="img-row">
-      <img class="img-thumb" src="${img.url}">
-      <div class="img-info">
-        <div class="img-meta">${img.width}×${img.height}</div>
-        <input class="text-input img-name-input" data-id="${img.id}" placeholder="Name (z.B. Regisseur)" value="${escapeHtml(img.name)}">
-        <div class="img-filename-preview" data-preview-id="${img.id}">${filenameFor(img)}</div>
-      </div>
-      <button class="delete-btn" data-remove-id="${img.id}" title="Entfernen">✕</button>
-    </div>
-  `).join('');
-}
-
-function addFiles(fileList) {
-  Array.from(fileList).forEach(file => {
-    if (!file.type.startsWith('image/')) return;
-    const url = URL.createObjectURL(file);
-    const im = new Image();
-    im.onload = () => {
-      batchImages.push({
-        id: crypto.randomUUID(),
-        file, url,
-        width: im.naturalWidth,
-        height: im.naturalHeight,
-        name: '',
-      });
-      renderBatch();
-    };
-    im.src = url;
+  exportBtn.disabled = !canvasCards.some(c => c.img);
+  el.innerHTML = canvasCards.map(cardHtml).join('');
+  canvasCards.forEach(card => {
+    const frameEl = document.querySelector(`[data-frame-id="${card.id}"]`);
+    if (frameEl) attachFrameDrag(frameEl, card);
+    if (card.img) applyImageTransform(card);
   });
 }
 
-const dropzone = document.getElementById('dropzone');
-dropzone.addEventListener('click', () => document.getElementById('fileInput').click());
-document.getElementById('fileInput').addEventListener('change', (e) => addFiles(e.target.files));
-dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
-dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-dropzone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropzone.classList.remove('dragover');
-  addFiles(e.dataTransfer.files);
+function loadImageIntoCard(card, file) {
+  if (card.imgUrl) URL.revokeObjectURL(card.imgUrl);
+  const url = URL.createObjectURL(file);
+  const im = new Image();
+  im.onload = () => {
+    card.img = im;
+    card.imgUrl = url;
+    card.naturalW = im.naturalWidth;
+    card.naturalH = im.naturalHeight;
+    card.scale = 1; card.offsetX = 0; card.offsetY = 0;
+    renderCards();
+  };
+  im.src = url;
+}
+
+const canvasList = document.getElementById('canvasList');
+
+canvasList.addEventListener('click', (e) => {
+  const emptyFrame = e.target.closest('[data-empty-trigger]');
+  if (emptyFrame) {
+    document.querySelector(`[data-file-input-id="${emptyFrame.dataset.emptyTrigger}"]`).click();
+    return;
+  }
+  const replaceBtn = e.target.closest('[data-replace-id]');
+  if (replaceBtn) {
+    document.querySelector(`[data-file-input-id="${replaceBtn.dataset.replaceId}"]`).click();
+    return;
+  }
+  const removeBtn = e.target.closest('[data-remove-card-id]');
+  if (removeBtn) {
+    const idx = canvasCards.findIndex(c => c.id === removeBtn.dataset.removeCardId);
+    if (idx !== -1) {
+      if (canvasCards[idx].imgUrl) URL.revokeObjectURL(canvasCards[idx].imgUrl);
+      canvasCards.splice(idx, 1);
+      renderCards();
+    }
+  }
 });
 
-document.getElementById('batchList').addEventListener('input', (e) => {
-  if (!e.target.classList.contains('img-name-input')) return;
-  const img = batchImages.find(i => i.id === e.target.dataset.id);
-  if (!img) return;
-  img.name = e.target.value;
-  const preview = document.querySelector(`[data-preview-id="${img.id}"]`);
-  if (preview) preview.textContent = filenameFor(img);
+canvasList.addEventListener('change', (e) => {
+  if (e.target.matches('[data-file-input-id]')) {
+    const card = canvasCards.find(c => c.id === e.target.dataset.fileInputId);
+    const file = e.target.files[0];
+    if (card && file) loadImageIntoCard(card, file);
+    return;
+  }
+  if (e.target.matches('[data-size-id]')) {
+    const card = canvasCards.find(c => c.id === e.target.dataset.sizeId);
+    if (!card) return;
+    card.sizeKey = e.target.value;
+    if (card.sizeKey !== 'custom') {
+      card.width = SIZE_PRESETS[card.sizeKey].w;
+      card.height = SIZE_PRESETS[card.sizeKey].h;
+    }
+    card.scale = 1; card.offsetX = 0; card.offsetY = 0;
+    renderCards();
+    return;
+  }
+  if (e.target.matches('[data-custom-w-id]') || e.target.matches('[data-custom-h-id]')) {
+    const isW = e.target.matches('[data-custom-w-id]');
+    const card = canvasCards.find(c => c.id === (isW ? e.target.dataset.customWId : e.target.dataset.customHId));
+    if (!card) return;
+    const val = Math.max(10, parseInt(e.target.value, 10) || 10);
+    if (isW) card.width = val; else card.height = val;
+    card.scale = 1; card.offsetX = 0; card.offsetY = 0;
+    renderCards();
+    return;
+  }
+  if (e.target.matches('[data-bw-id]')) {
+    const card = canvasCards.find(c => c.id === e.target.dataset.bwId);
+    if (!card) return;
+    card.grayscale = e.target.checked;
+    applyImageFilter(card);
+  }
 });
 
-document.getElementById('batchList').addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-remove-id]');
-  if (!btn) return;
-  const idx = batchImages.findIndex(i => i.id === btn.dataset.removeId);
-  if (idx === -1) return;
-  URL.revokeObjectURL(batchImages[idx].url);
-  batchImages.splice(idx, 1);
-  renderBatch();
+canvasList.addEventListener('input', (e) => {
+  if (e.target.matches('[data-name-id]')) {
+    const card = canvasCards.find(c => c.id === e.target.dataset.nameId);
+    if (!card) return;
+    card.name = e.target.value;
+    const preview = document.querySelector(`[data-filename-id="${card.id}"]`);
+    if (preview) preview.textContent = filenameFor(card);
+    return;
+  }
+  if (e.target.matches('[data-zoom-id]')) {
+    const card = canvasCards.find(c => c.id === e.target.dataset.zoomId);
+    if (!card) return;
+    card.scale = parseFloat(e.target.value);
+    applyImageTransform(card);
+    return;
+  }
+  if (e.target.matches('[data-contrast-id]')) {
+    const card = canvasCards.find(c => c.id === e.target.dataset.contrastId);
+    if (!card) return;
+    card.contrast = parseInt(e.target.value, 10);
+    applyImageFilter(card);
+    return;
+  }
+  if (e.target.matches('[data-brightness-id]')) {
+    const card = canvasCards.find(c => c.id === e.target.dataset.brightnessId);
+    if (!card) return;
+    card.brightness = parseInt(e.target.value, 10);
+    applyImageFilter(card);
+    return;
+  }
+  if (e.target.matches('[data-saturation-id]')) {
+    const card = canvasCards.find(c => c.id === e.target.dataset.saturationId);
+    if (!card) return;
+    card.saturation = parseInt(e.target.value, 10);
+    applyImageFilter(card);
+  }
 });
 
-document.getElementById('downloadAllBtn').addEventListener('click', () => {
-  batchImages.forEach((img, i) => {
+function renderCardToBlob(card) {
+  return new Promise(resolve => {
+    const canvas = document.createElement('canvas');
+    canvas.width = card.width;
+    canvas.height = card.height;
+    const ctx = canvas.getContext('2d');
+    ctx.filter = filterString(card);
+    const baseScale = Math.max(card.width / card.naturalW, card.height / card.naturalH);
+    const dispW = card.naturalW * baseScale * card.scale;
+    const dispH = card.naturalH * baseScale * card.scale;
+    const left = (card.width - dispW) / 2 + card.offsetX;
+    const top = (card.height - dispH) / 2 + card.offsetY;
+    ctx.drawImage(card.img, left, top, dispW, dispH);
+    canvas.toBlob(blob => resolve(blob), 'image/png');
+  });
+}
+
+document.getElementById('addCanvasBtn').addEventListener('click', addCard);
+
+document.getElementById('exportAllBtn').addEventListener('click', async () => {
+  const withImages = canvasCards.filter(c => c.img);
+  const blobs = await Promise.all(withImages.map(renderCardToBlob));
+  blobs.forEach((blob, i) => {
     setTimeout(() => {
       const a = document.createElement('a');
-      a.href = img.url;
-      a.download = filenameFor(img);
+      a.href = URL.createObjectURL(blob);
+      a.download = filenameFor(withImages[i]);
       document.body.appendChild(a);
       a.click();
       a.remove();
