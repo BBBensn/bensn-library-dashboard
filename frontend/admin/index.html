@@ -55,6 +55,52 @@
   transition: border-color .15s, color .15s;
 }
 .delete-btn:hover { border-color: rgba(255,0,81,.4); color: var(--accent-red); }
+
+.dropzone {
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+  margin-bottom: 1.5rem;
+}
+.dropzone:hover, .dropzone.dragover { border-color: var(--accent-blue); color: var(--text); }
+
+.img-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: .75rem 1rem;
+  margin-bottom: 8px;
+}
+.img-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #000; }
+.img-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 1rem; }
+.img-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; }
+.img-filename-preview { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent-blue); word-break: break-all; flex: 1; }
+.img-name-input { width: 160px; flex-shrink: 0; }
+.batch-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; }
+
+.submit-btn {
+  padding: .7rem 1.5rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent-blue);
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.submit-btn:active { transform: scale(.98); opacity: .85; }
+.submit-btn:disabled { opacity: .4; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -75,11 +121,31 @@
   </nav>
 
   <header class="wt-hero intro-fade">
-    <h1>Wunschliste<span class="dim">.</span></h1>
-    <p class="subtitle">Status der eingegangenen Wünsche verwalten.</p>
+    <h1>Admin<span class="dim">.</span></h1>
+    <p class="subtitle">Wunschliste verwalten und Bilder für Collections exportieren.</p>
   </header>
 
-  <div id="wishList"><div class="lib-empty">lädt…</div></div>
+  <div class="tabs intro-fade">
+    <button class="tab active" data-tab="wishlist">Wunschliste</button>
+    <button class="tab" data-tab="export">Bild-Export</button>
+  </div>
+
+  <section class="tab-section visible" id="tab-wishlist">
+    <div id="wishList"><div class="lib-empty">lädt…</div></div>
+  </section>
+
+  <section class="tab-section" id="tab-export">
+    <div class="dropzone" id="dropzone">
+      Bilder hierher ziehen oder klicken zum Auswählen<br>
+      (Größe wird automatisch aus der Bilddatei gelesen)
+    </div>
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
+    <div id="batchList"><div class="lib-empty">Noch keine Bilder hinzugefügt.</div></div>
+    <div class="batch-actions">
+      <span class="lib-empty" id="batchCount"></span>
+      <button class="submit-btn" id="downloadAllBtn" disabled>Alle herunterladen</button>
+    </div>
+  </section>
 
   <footer>
     <span class="footer-left">bensn.me</span>
@@ -170,6 +236,116 @@ document.getElementById('wishList').addEventListener('click', async (e) => {
   } catch (err) {
     alert('Fehler: ' + err.message);
   }
+});
+
+/* ── Tabs ── */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('visible'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('visible');
+  });
+});
+
+/* ── Bild-Export (rein clientseitig, nichts wird hochgeladen) ── */
+let batchImages = [];
+
+function sanitizeName(name) {
+  return (name || '').trim().replace(/[\/\\:*?"<>|]/g, '');
+}
+
+function filenameFor(img) {
+  const ext = img.file.name.includes('.') ? img.file.name.split('.').pop() : 'png';
+  const base = sanitizeName(img.name) || 'unbenannt';
+  return `${base}_${img.width}x${img.height}.${ext}`;
+}
+
+function renderBatch() {
+  const el = document.getElementById('batchList');
+  const btn = document.getElementById('downloadAllBtn');
+  const count = document.getElementById('batchCount');
+  if (!batchImages.length) {
+    el.innerHTML = '<div class="lib-empty">Noch keine Bilder hinzugefügt.</div>';
+    btn.disabled = true;
+    count.textContent = '';
+    return;
+  }
+  btn.disabled = false;
+  count.textContent = `${batchImages.length} Bild${batchImages.length === 1 ? '' : 'er'}`;
+  el.innerHTML = batchImages.map(img => `
+    <div class="img-row">
+      <img class="img-thumb" src="${img.url}">
+      <div class="img-info">
+        <div class="img-meta">${img.width}×${img.height}</div>
+        <input class="text-input img-name-input" data-id="${img.id}" placeholder="Name (z.B. Regisseur)" value="${escapeHtml(img.name)}">
+        <div class="img-filename-preview" data-preview-id="${img.id}">${filenameFor(img)}</div>
+      </div>
+      <button class="delete-btn" data-remove-id="${img.id}" title="Entfernen">✕</button>
+    </div>
+  `).join('');
+}
+
+function addFiles(fileList) {
+  Array.from(fileList).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      batchImages.push({
+        id: crypto.randomUUID(),
+        file, url,
+        width: im.naturalWidth,
+        height: im.naturalHeight,
+        name: '',
+      });
+      renderBatch();
+    };
+    im.src = url;
+  });
+}
+
+const dropzone = document.getElementById('dropzone');
+dropzone.addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', (e) => addFiles(e.target.files));
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  addFiles(e.dataTransfer.files);
+});
+
+document.getElementById('batchList').addEventListener('input', (e) => {
+  if (!e.target.classList.contains('img-name-input')) return;
+  const img = batchImages.find(i => i.id === e.target.dataset.id);
+  if (!img) return;
+  img.name = e.target.value;
+  const preview = document.querySelector(`[data-preview-id="${img.id}"]`);
+  if (preview) preview.textContent = filenameFor(img);
+});
+
+document.getElementById('batchList').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-remove-id]');
+  if (!btn) return;
+  const idx = batchImages.findIndex(i => i.id === btn.dataset.removeId);
+  if (idx === -1) return;
+  URL.revokeObjectURL(batchImages[idx].url);
+  batchImages.splice(idx, 1);
+  renderBatch();
+});
+
+document.getElementById('downloadAllBtn').addEventListener('click', () => {
+  batchImages.forEach((img, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = img.url;
+      a.download = filenameFor(img);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }, i * 300);
+  });
 });
 
 (async function init() {
