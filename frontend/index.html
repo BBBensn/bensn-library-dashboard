@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Library · bensn.me</title>
+<meta name="description" content="Wunschliste und Bestandsübersicht für stream.bensn.me.">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared/bensn.css">
+<style>
+/* ── Library-specific additions ── */
+.form-group { margin-bottom: 1.1rem; }
+.form-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-bottom: .5rem;
+}
+.text-input, select.text-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: .8rem 1rem;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+.text-input:focus { border-color: var(--border-hover); }
+.text-input::placeholder { color: var(--muted); }
+textarea.text-input { resize: vertical; min-height: 4.5rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+
+.submit-btn {
+  padding: .875rem 1.75rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent-blue);
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.submit-btn:active { transform: scale(.98); opacity: .85; }
+.submit-btn:disabled { opacity: .4; pointer-events: none; }
+
+.badge { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 4px; white-space: nowrap; border: 1px solid var(--border); color: var(--muted); }
+.badge-blue { border-color: rgba(0,166,251,.3); color: var(--accent-blue); }
+.badge-orange { border-color: rgba(232,114,74,.3); color: var(--orange); }
+.badge-green { border-color: rgba(74,222,128,.3); color: var(--green); }
+.badge-red { border-color: rgba(255,0,81,.3); color: var(--accent-red); }
+
+.wish-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem 1.35rem;
+  margin-bottom: 8px;
+  transition: border-color .15s;
+}
+.wish-row:hover { border-color: var(--border-hover); }
+.wish-row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 6px; }
+.wish-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em; }
+.wish-badges { display: flex; gap: 6px; flex-shrink: 0; }
+.wish-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--surface);
+  border: 1px solid var(--border-hover);
+  border-radius: 12px;
+  padding: .875rem 1.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  transition: transform .3s ease;
+  z-index: 100;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { border-color: rgba(255,0,81,.3); color: var(--accent-red); }
+
+/* ── Bestand ── */
+.lib-toolbar { display: flex; gap: .75rem; margin-bottom: 1.25rem; }
+.lib-toolbar .text-input { flex: 1; }
+.lib-toolbar select.text-input { flex: none; width: 160px; }
+
+.lib-grid {
+  display: grid;
+  grid-template-columns: 2.2fr .6fr .8fr .9fr .8fr .9fr .8fr .9fr;
+  gap: 8px;
+  align-items: center;
+}
+.lib-head {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+.lib-head:hover { color: var(--text); }
+.lib-head.sorted { color: var(--text); }
+.lib-row {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+}
+.lib-row .lib-title-cell { display: flex; align-items: center; gap: 8px; font-family: 'Syne', sans-serif; font-size: .9rem; font-weight: 700; cursor: default; }
+.lib-row.expandable .lib-title-cell { cursor: pointer; }
+.lib-arrow { display: inline-block; width: 10px; color: var(--muted); transition: transform .15s; flex-shrink: 0; }
+.lib-arrow.open { transform: rotate(90deg); }
+.lib-row.lvl-1 .lib-title-cell { padding-left: 1.4rem; font-size: .85rem; font-weight: 500; }
+.lib-row.lvl-2 .lib-title-cell { padding-left: 2.8rem; font-family: 'DM Mono', monospace; font-weight: 400; font-size: 12px; }
+.lib-muted { color: var(--muted); }
+.lib-empty { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="blobs" id="blobs"></div>
+
+<div class="wrap">
+  <nav class="app-nav intro-fade">
+    <a href="https://bensn.me" class="nav-crumb"><span>bensn</span>.me</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-current">library</span>
+    <div class="nav-right">
+      <div class="dot" id="statusDot" style="background:var(--muted);animation:none"></div>
+      <span id="statusText">laden…</span>
+    </div>
+  </nav>
+
+  <header class="wt-hero intro-fade">
+    <h1>Library<span class="dim">.</span></h1>
+    <p class="subtitle">Wünsch dir Filme &amp; Serien oder stöber im aktuellen Bestand von stream.bensn.me.</p>
+  </header>
+
+  <div class="tabs intro-fade">
+    <button class="tab active" data-tab="wishlist">Wunschliste</button>
+    <button class="tab" data-tab="bestand">Bestand</button>
+  </div>
+
+  <section class="tab-section visible" id="tab-wishlist">
+    <div class="wt-card">
+      <div class="wt-label">Neuer Wunsch</div>
+      <form id="wishForm">
+        <div class="form-group">
+          <label class="form-label">Titel</label>
+          <input class="text-input" id="wTitle" type="text" placeholder="Filmtitel oder Serientitel" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Typ</label>
+            <select class="text-input" id="wType">
+              <option value="">–</option>
+              <option value="movie">Film</option>
+              <option value="series">Serie</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Priorität</label>
+            <select class="text-input" id="wPriority">
+              <option value="low" selected>Niedrig</option>
+              <option value="medium">Mittel</option>
+              <option value="high">Hoch</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Wunsch von</label>
+          <input class="text-input" id="wFrom" type="text" placeholder="Dein Name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notiz</label>
+          <textarea class="text-input" id="wNote" placeholder="z.B. gewünschte Sprache, Edition, Anmerkungen"></textarea>
+        </div>
+        <button class="submit-btn" type="submit" id="wSubmit">Wunsch eintragen</button>
+      </form>
+    </div>
+
+    <div class="wt-label" style="margin-top:2rem">Offene &amp; laufende Wünsche</div>
+    <div id="wishList"><div class="lib-empty">lädt…</div></div>
+  </section>
+
+  <section class="tab-section" id="tab-bestand">
+    <div class="lib-toolbar">
+      <input class="text-input" id="libSearch" type="text" placeholder="Titel suchen…">
+      <select class="text-input" id="libFilter">
+        <option value="">Alle</option>
+        <option value="movie">Filme</option>
+        <option value="series">Serien</option>
+      </select>
+    </div>
+    <div class="lib-grid" style="margin-bottom:2px">
+      <div class="lib-head" data-sort="title">Titel</div>
+      <div class="lib-head" data-sort="year">Jahr</div>
+      <div class="lib-head">Format</div>
+      <div class="lib-head">Video</div>
+      <div class="lib-head">Auflösung</div>
+      <div class="lib-head">Audio</div>
+      <div class="lib-head">Sprache</div>
+      <div class="lib-head sorted" data-sort="size">Größe ↓</div>
+    </div>
+    <div id="libRows"><div class="lib-empty">lädt…</div></div>
+  </section>
+
+  <footer>
+    <span class="footer-left">bensn.me</span>
+    <span class="footer-right">Wien, AT</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/shared/bensn.js"></script>
+<script>
+async function apiFetch(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+  return r.json();
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast'; }, 2800);
+}
+
+function setStatus(ok) {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  dot.style.background = ok ? 'var(--green)' : 'var(--accent-red)';
+  dot.style.animation = 'pulse 2s ease-in-out infinite';
+  text.textContent = ok ? 'bereit' : 'fehler';
+}
+
+function formatBytes(bytes) {
+  if (!bytes) return '–';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0, v = bytes;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return v.toFixed(v >= 10 || i === 0 ? 0 : 1) + ' ' + units[i];
+}
+
+/* ── Tabs ── */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('visible'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('visible');
+  });
+});
+
+/* ── Wishlist ── */
+const TYPE_LABEL = { movie: 'Film', series: 'Serie' };
+const PRIORITY_LABEL = { low: 'Niedrig', medium: 'Mittel', high: 'Hoch' };
+const PRIORITY_CLASS = { low: 'badge', medium: 'badge-orange', high: 'badge-red' };
+const STATUS_LABEL = { open: 'Offen', in_progress: 'In Bearbeitung', done: 'Erledigt' };
+const STATUS_CLASS = { open: 'badge-blue', in_progress: 'badge-orange', done: 'badge-green' };
+
+function renderWishlist(items) {
+  const el = document.getElementById('wishList');
+  if (!items.length) { el.innerHTML = '<div class="lib-empty">Noch keine Wünsche eingetragen.</div>'; return; }
+  el.innerHTML = items.map(item => `
+    <div class="wish-row">
+      <div class="wish-row-top">
+        <div class="wish-title">${escapeHtml(item.title)}</div>
+        <div class="wish-badges">
+          <span class="badge ${PRIORITY_CLASS[item.priority] || ''}">${PRIORITY_LABEL[item.priority] || item.priority || ''}</span>
+          <span class="badge ${STATUS_CLASS[item.status] || ''}">${STATUS_LABEL[item.status] || item.status}</span>
+        </div>
+      </div>
+      <div class="wish-meta">
+        ${item.type ? TYPE_LABEL[item.type] || item.type : '–'}
+        ${item.requested_by ? ' · von ' + escapeHtml(item.requested_by) : ''}
+        ${item.note ? '<br>' + escapeHtml(item.note) : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str ?? '';
+  return d.innerHTML;
+}
+
+async function loadWishlist() {
+  const items = await apiFetch('/api/wishlist');
+  renderWishlist(items);
+}
+
+document.getElementById('wishForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('wSubmit');
+  btn.disabled = true;
+  try {
+    await apiFetch('/api/wishlist', 'POST', {
+      title: document.getElementById('wTitle').value,
+      type: document.getElementById('wType').value || null,
+      priority: document.getElementById('wPriority').value,
+      requested_by: document.getElementById('wFrom').value || null,
+      note: document.getElementById('wNote').value || null,
+    });
+    document.getElementById('wishForm').reset();
+    document.getElementById('wPriority').value = 'low';
+    showToast('Wunsch eingetragen');
+    await loadWishlist();
+  } catch (err) {
+    showToast('Fehler: ' + err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ── Bestand ── */
+let libData = { movies: [], series: [] };
+let sortKey = 'size';
+let sortAsc = false;
+const expanded = new Set();
+
+function combinedRows() {
+  const movies = libData.movies.map(m => ({ kind: 'movie', title: m.title, year: m.year, container: m.container, video_codec: m.video_codec, resolution: m.resolution, audio_codec: m.audio_codec, audio_languages: m.audio_languages, file_size_bytes: m.file_size_bytes }));
+  const series = libData.series.map(s => ({ kind: 'series', title: s.series_title, year: null, container: null, video_codec: null, resolution: null, audio_codec: null, audio_languages: null, file_size_bytes: s.total_size_bytes, ref: s }));
+  return movies.concat(series);
+}
+
+function sortRows(rows) {
+  const dir = sortAsc ? 1 : -1;
+  return rows.slice().sort((a, b) => {
+    let av, bv;
+    if (sortKey === 'title') { av = (a.title || '').toLowerCase(); bv = (b.title || '').toLowerCase(); }
+    else if (sortKey === 'year') { av = a.year || 0; bv = b.year || 0; }
+    else { av = a.file_size_bytes || 0; bv = b.file_size_bytes || 0; }
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+}
+
+function rowHtml(item, lvl, expandKey) {
+  const isSeries = item.kind === 'series';
+  const isOpen = expandKey && expanded.has(expandKey);
+  return `
+    <div class="lib-grid lib-row ${isSeries ? 'expandable' : ''} lvl-${lvl}" ${expandKey ? `data-expand-key="${expandKey}"` : ''}>
+      <div class="lib-title-cell">
+        ${isSeries ? `<span class="lib-arrow ${isOpen ? 'open' : ''}">▸</span>` : ''}
+        ${escapeHtml(item.title)}
+      </div>
+      <div>${item.year || '<span class="lib-muted">–</span>'}</div>
+      <div>${item.container || '<span class="lib-muted">–</span>'}</div>
+      <div>${item.video_codec || '<span class="lib-muted">–</span>'}</div>
+      <div>${item.resolution || '<span class="lib-muted">–</span>'}</div>
+      <div>${item.audio_codec || '<span class="lib-muted">–</span>'}</div>
+      <div>${item.audio_languages || '<span class="lib-muted">–</span>'}</div>
+      <div>${formatBytes(item.file_size_bytes)}${isSeries ? ` <span class="lib-muted">(${item.ref.episode_count})</span>` : ''}</div>
+    </div>
+  `;
+}
+
+function seriesChildrenHtml(series) {
+  if (!expanded.has('s:' + series.series_jellyfin_id)) return '';
+  return series.seasons.map(season => {
+    const seasonKey = 'season:' + series.series_jellyfin_id + ':' + season.season_number;
+    const seasonItem = {
+      kind: 'series',
+      title: 'Staffel ' + (season.season_number ?? '?'),
+      file_size_bytes: season.total_size_bytes,
+      ref: season,
+    };
+    let html = rowHtml(seasonItem, 1, seasonKey);
+    if (expanded.has(seasonKey)) {
+      html += season.episodes.map(ep => rowHtml({
+        kind: 'episode',
+        title: (ep.episode_number ? ep.episode_number + '. ' : '') + ep.title,
+        year: null,
+        container: ep.container,
+        video_codec: ep.video_codec,
+        resolution: ep.resolution,
+        audio_codec: ep.audio_codec,
+        audio_languages: ep.audio_languages,
+        file_size_bytes: ep.file_size_bytes,
+      }, 2, null)).join('');
+    }
+    return html;
+  }).join('');
+}
+
+function renderLibrary() {
+  const search = document.getElementById('libSearch').value.trim().toLowerCase();
+  const filterType = document.getElementById('libFilter').value;
+
+  let rows = combinedRows();
+  if (filterType) rows = rows.filter(r => r.kind === filterType);
+  if (search) rows = rows.filter(r => (r.title || '').toLowerCase().includes(search));
+  rows = sortRows(rows);
+
+  const el = document.getElementById('libRows');
+  if (!rows.length) { el.innerHTML = '<div class="lib-empty">Keine Treffer.</div>'; return; }
+
+  el.innerHTML = rows.map(item => {
+    if (item.kind === 'series') {
+      const key = 's:' + item.ref.series_jellyfin_id;
+      return rowHtml(item, 0, key) + seriesChildrenHtml(item.ref);
+    }
+    return rowHtml(item, 0, null);
+  }).join('');
+}
+
+document.getElementById('libRows').addEventListener('click', (e) => {
+  const row = e.target.closest('.lib-row.expandable');
+  if (!row) return;
+  const key = row.dataset.expandKey;
+  if (expanded.has(key)) expanded.delete(key); else expanded.add(key);
+  renderLibrary();
+});
+
+document.querySelectorAll('.lib-head[data-sort]').forEach(head => {
+  head.addEventListener('click', () => {
+    const key = head.dataset.sort;
+    if (sortKey === key) sortAsc = !sortAsc; else { sortKey = key; sortAsc = key !== 'size'; }
+    document.querySelectorAll('.lib-head').forEach(h => h.classList.remove('sorted'));
+    head.classList.add('sorted');
+    renderLibrary();
+  });
+});
+document.getElementById('libSearch').addEventListener('input', renderLibrary);
+document.getElementById('libFilter').addEventListener('change', renderLibrary);
+
+async function loadLibrary() {
+  libData = await apiFetch('/api/library');
+  renderLibrary();
+}
+
+/* ── Init ── */
+(async function init() {
+  try {
+    await Promise.all([loadWishlist(), loadLibrary()]);
+    setStatus(true);
+  } catch (err) {
+    setStatus(false);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Library Admin · bensn.me</title>
+<meta name="theme-color" content="#0a0a0b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared/bensn.css">
+<style>
+.text-input, select.text-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .55rem .75rem;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  outline: none;
+  -webkit-appearance: none;
+}
+.badge { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 4px; white-space: nowrap; border: 1px solid var(--border); color: var(--muted); }
+.badge-orange { border-color: rgba(232,114,74,.3); color: var(--orange); }
+.badge-red { border-color: rgba(255,0,81,.3); color: var(--accent-red); }
+
+.wish-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem 1.35rem;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: border-color .15s;
+}
+.wish-row:hover { border-color: var(--border-hover); }
+.wish-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em; margin-bottom: 4px; }
+.wish-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.6; }
+.wish-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.lib-empty { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="blobs" id="blobs"></div>
+
+<div class="wrap">
+  <nav class="app-nav intro-fade">
+    <a href="https://bensn.me" class="nav-crumb"><span>bensn</span>.me</a>
+    <span class="nav-sep">/</span>
+    <a href="/" class="nav-crumb">library</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-current">admin</span>
+    <div class="nav-right">
+      <div class="dot" id="statusDot" style="background:var(--muted);animation:none"></div>
+      <span id="statusText">laden…</span>
+    </div>
+  </nav>
+
+  <header class="wt-hero intro-fade">
+    <h1>Wunschliste<span class="dim">.</span></h1>
+    <p class="subtitle">Status der eingegangenen Wünsche verwalten.</p>
+  </header>
+
+  <div id="wishList"><div class="lib-empty">lädt…</div></div>
+
+  <footer>
+    <span class="footer-left">bensn.me</span>
+    <span class="footer-right">Wien, AT</span>
+  </footer>
+</div>
+
+<script src="/shared/bensn.js"></script>
+<script>
+async function apiFetch(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+  return r.json();
+}
+
+function setStatus(ok) {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  dot.style.background = ok ? 'var(--green)' : 'var(--accent-red)';
+  dot.style.animation = 'pulse 2s ease-in-out infinite';
+  text.textContent = ok ? 'bereit' : 'fehler';
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str ?? '';
+  return d.innerHTML;
+}
+
+const TYPE_LABEL = { movie: 'Film', series: 'Serie' };
+const PRIORITY_LABEL = { low: 'Niedrig', medium: 'Mittel', high: 'Hoch' };
+const PRIORITY_CLASS = { low: 'badge', medium: 'badge-orange', high: 'badge-red' };
+
+function renderWishlist(items) {
+  const el = document.getElementById('wishList');
+  if (!items.length) { el.innerHTML = '<div class="lib-empty">Noch keine Wünsche eingetragen.</div>'; return; }
+  el.innerHTML = items.map(item => `
+    <div class="wish-row">
+      <div>
+        <div class="wish-title">${escapeHtml(item.title)}</div>
+        <div class="wish-meta">
+          ${item.type ? TYPE_LABEL[item.type] || item.type : '–'}
+          ${item.requested_by ? ' · von ' + escapeHtml(item.requested_by) : ''}
+          ${item.note ? '<br>' + escapeHtml(item.note) : ''}
+        </div>
+      </div>
+      <div class="wish-right">
+        <span class="badge ${PRIORITY_CLASS[item.priority] || ''}">${PRIORITY_LABEL[item.priority] || item.priority || ''}</span>
+        <select class="text-input" data-id="${item.id}">
+          <option value="open" ${item.status === 'open' ? 'selected' : ''}>Offen</option>
+          <option value="in_progress" ${item.status === 'in_progress' ? 'selected' : ''}>In Bearbeitung</option>
+          <option value="done" ${item.status === 'done' ? 'selected' : ''}>Erledigt</option>
+        </select>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadWishlist() {
+  const items = await apiFetch('/api/wishlist');
+  renderWishlist(items);
+}
+
+document.getElementById('wishList').addEventListener('change', async (e) => {
+  if (e.target.tagName !== 'SELECT') return;
+  const id = e.target.dataset.id;
+  try {
+    await apiFetch(`/api/wishlist/${id}/status`, 'PATCH', { status: e.target.value });
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+    await loadWishlist();
+  }
+});
+
+(async function init() {
+  try {
+    await loadWishlist();
+    setStatus(true);
+  } catch (err) {
+    setStatus(false);
+  }
+})();
+</script>
+</body>
+</html>

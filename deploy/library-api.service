@@ -1,0 +1,19 @@
+[Unit]
+Description=Library Dashboard API
+After=network.target
+
+[Service]
+User=www-data
+WorkingDirectory=/var/www/library/api
+EnvironmentFile=/var/www/library/api/.env
+ExecStart=/usr/bin/python3 -m gunicorn \
+    --workers 2 \
+    --bind 127.0.0.1:5006 \
+    --access-logfile /var/log/library-api.log \
+    --error-logfile /var/log/library-api-error.log \
+    app:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

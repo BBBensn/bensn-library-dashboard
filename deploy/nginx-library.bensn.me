@@ -1,0 +1,82 @@
+server {
+    listen 80;
+    server_name library.bensn.me;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name library.bensn.me;
+
+    ssl_certificate     /etc/letsencrypt/live/library.bensn.me/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/library.bensn.me/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    root  /var/www/library/public;
+    index index.html;
+
+    client_max_body_size 10M;
+
+    # ── Auth-Verify-Proxy (internal) ───────────────────────────────
+    location = /auth/verify {
+        internal;
+        proxy_pass              http://127.0.0.1:5003/auth/verify;
+        proxy_pass_request_body off;
+        proxy_set_header        Content-Length "";
+        proxy_set_header        X-Original-URI $request_uri;
+        proxy_set_header        Cookie $http_cookie;
+    }
+
+    location @bensn_login_redirect {
+        return 302 https://auth.bensn.me/auth/login?next=https://library.bensn.me$request_uri;
+    }
+
+    # ── Shared design-system assets ─────────────────────────────────
+    location /shared/ {
+        alias /var/www/shared/;
+    }
+
+    # ── NAS-Sync (extern, eigener X-API-Key in Flask, kein Cookie-Gate) ──
+    location = /api/library/sync {
+        proxy_pass          http://127.0.0.1:5006/api/library/sync;
+        proxy_set_header    Host $host;
+        proxy_set_header    X-Real-IP $remote_addr;
+    }
+
+    # ── Bestandsliste, oeffentlich lesbar ────────────────────────────
+    location = /api/library {
+        proxy_pass          http://127.0.0.1:5006/api/library;
+        proxy_set_header    Host $host;
+        proxy_set_header    X-Real-IP $remote_addr;
+    }
+
+    # ── Wishlist-Status aendern, privat (vor der generischen /api/wishlist-Route!) ──
+    location ~ ^/api/wishlist/[0-9]+/status$ {
+        auth_request /auth/verify;
+        error_page 401 = @bensn_login_redirect;
+        proxy_pass          http://127.0.0.1:5006;
+        proxy_set_header    Host $host;
+        proxy_set_header    X-Real-IP $remote_addr;
+    }
+
+    # ── Wishlist lesen/eintragen, oeffentlich ────────────────────────
+    location /api/wishlist {
+        proxy_pass          http://127.0.0.1:5006;
+        proxy_set_header    Host $host;
+        proxy_set_header    X-Real-IP $remote_addr;
+    }
+
+    # ── Admin-Bereich, privat ─────────────────────────────────────────
+    location /admin {
+        auth_request /auth/verify;
+        error_page 401 = @bensn_login_redirect;
+        alias /var/www/library/admin/;
+        try_files $uri $uri/ /admin/index.html;
+    }
+
+    # ── Oeffentliche Hauptseite ───────────────────────────────────────
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
