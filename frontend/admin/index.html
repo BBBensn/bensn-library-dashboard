@@ -41,6 +41,20 @@
 .wish-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.6; }
 .wish-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
 .lib-empty { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+
+.wish-actions { display: flex; align-items: center; gap: 8px; }
+.delete-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: .5rem .6rem;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.delete-btn:hover { border-color: rgba(255,0,81,.4); color: var(--accent-red); }
 </style>
 </head>
 <body>
@@ -80,6 +94,7 @@ async function apiFetch(path, method = 'GET', body = null) {
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(path, opts);
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+  if (r.status === 204) return null;
   return r.json();
 }
 
@@ -116,11 +131,14 @@ function renderWishlist(items) {
       </div>
       <div class="wish-right">
         <span class="badge ${PRIORITY_CLASS[item.priority] || ''}">${PRIORITY_LABEL[item.priority] || item.priority || ''}</span>
-        <select class="text-input" data-id="${item.id}">
-          <option value="open" ${item.status === 'open' ? 'selected' : ''}>Offen</option>
-          <option value="in_progress" ${item.status === 'in_progress' ? 'selected' : ''}>In Bearbeitung</option>
-          <option value="done" ${item.status === 'done' ? 'selected' : ''}>Erledigt</option>
-        </select>
+        <div class="wish-actions">
+          <select class="text-input" data-id="${item.id}">
+            <option value="open" ${item.status === 'open' ? 'selected' : ''}>Offen</option>
+            <option value="in_progress" ${item.status === 'in_progress' ? 'selected' : ''}>In Bearbeitung</option>
+            <option value="done" ${item.status === 'done' ? 'selected' : ''}>Erledigt</option>
+          </select>
+          <button class="delete-btn" data-delete-id="${item.id}" title="Löschen">✕</button>
+        </div>
       </div>
     </div>
   `).join('');
@@ -139,6 +157,18 @@ document.getElementById('wishList').addEventListener('change', async (e) => {
   } catch (err) {
     alert('Fehler: ' + err.message);
     await loadWishlist();
+  }
+});
+
+document.getElementById('wishList').addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-delete-id]');
+  if (!btn) return;
+  if (!confirm('Diesen Wunsch endgültig löschen?')) return;
+  try {
+    await apiFetch(`/api/wishlist/${btn.dataset.deleteId}`, 'DELETE');
+    await loadWishlist();
+  } catch (err) {
+    alert('Fehler: ' + err.message);
   }
 });
 

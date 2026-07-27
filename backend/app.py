@@ -113,6 +113,16 @@ def wishlist_update_status(item_id):
     return jsonify(serialize(row))
 
 
+@app.route("/api/wishlist/<int:item_id>", methods=["DELETE"])
+def wishlist_delete(item_id):
+    rowcount = db_query(
+        "DELETE FROM wishlist_items WHERE id = %s", (item_id,), commit=True
+    )
+    if rowcount == 0:
+        return jsonify({"error": "not found"}), 404
+    return "", 204
+
+
 # ── Library / Bestandsliste ─────────────────────────────────────────────
 
 @app.route("/api/library", methods=["GET"])

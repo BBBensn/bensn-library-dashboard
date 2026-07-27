@@ -60,6 +60,15 @@ server {
         proxy_set_header    X-Real-IP $remote_addr;
     }
 
+    # ── Wishlist-Eintrag loeschen, privat ─────────────────────────────
+    location ~ ^/api/wishlist/[0-9]+$ {
+        auth_request /auth/verify;
+        error_page 401 = @bensn_login_redirect;
+        proxy_pass          http://127.0.0.1:5006;
+        proxy_set_header    Host $host;
+        proxy_set_header    X-Real-IP $remote_addr;
+    }
+
     # ── Wishlist lesen/eintragen, oeffentlich ────────────────────────
     location /api/wishlist {
         proxy_pass          http://127.0.0.1:5006;
@@ -71,8 +80,7 @@ server {
     location /admin {
         auth_request /auth/verify;
         error_page 401 = @bensn_login_redirect;
-        alias /var/www/library/admin/;
-        try_files $uri $uri/ /admin/index.html;
+        try_files $uri $uri/ =404;
     }
 
     # ── Oeffentliche Hauptseite ───────────────────────────────────────
