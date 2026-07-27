@@ -58,7 +58,11 @@ Library Dashboard/
     └── .env            ← DATABASE_URL, LIBRARY_SYNC_KEY (chmod 600, www-data)
 
 NAS (TrueNAS, 192.168.0.63):
-/mnt/atlas/library-sync/sync_library.py  ← Cron Job, nachts, pusht Bestand an library.bensn.me
+/mnt/atlas/library-sync/sync_library.py  ← Sync-Script
+/mnt/atlas/library-sync/run_sync.sh      ← Wrapper mit Env-Vars (JELLYFIN_API_KEY, LIBRARY_SYNC_KEY),
+                                            chmod 700, NICHT im Repo (enthaelt Secrets)
+TrueNAS Cron Job (via midclt cronjob.create, User truenas_admin, taeglich 03:30) ruft run_sync.sh auf.
+Verwaltung: TrueNAS UI -> System Settings -> Advanced -> Cron Jobs, oder `midclt call cronjob.query`.
 ```
 
 ---
