@@ -88,27 +88,28 @@
 .export-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.7; }
 .export-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 
-/* ── Canvas-Karten ── */
-.canvas-card {
+/* ── Projekte ── */
+.project-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1.25rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
 }
-.canvas-card-header { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; flex-wrap: wrap; }
-.canvas-name-input { width: 170px; }
-.canvas-size-select { width: 190px; }
-.canvas-custom-size { display: flex; align-items: center; gap: .4rem; }
-.canvas-custom-size .text-input { width: 72px; }
-.canvas-card-header .delete-btn { margin-left: auto; }
+.project-header { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; }
+.project-name-input { width: 240px; font-size: 13px; }
+.project-header .delete-btn { margin-left: auto; }
+
+.tmpl-grid { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1.75rem; }
+.tmpl-card { display: flex; flex-direction: column; width: fit-content; }
+.tmpl-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 
 .canvas-frame {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
-  margin-bottom: 1rem;
+  margin-bottom: .75rem;
   cursor: grab;
   touch-action: none;
   background-image:
@@ -121,24 +122,24 @@
 .canvas-frame.dragging { cursor: grabbing; }
 .canvas-frame.empty {
   display: flex; align-items: center; justify-content: center;
-  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
-  text-align: center; cursor: pointer; padding: 1rem;
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted);
+  text-align: center; cursor: pointer; padding: .5rem;
 }
 .canvas-frame img { position: absolute; user-select: none; -webkit-user-drag: none; pointer-events: none; }
 
 .canvas-replace-btn {
-  position: absolute; top: 8px; right: 8px; z-index: 2;
+  position: absolute; top: 6px; right: 6px; z-index: 2;
   background: rgba(0,0,0,.65); border: 1px solid rgba(255,255,255,.2); color: #fff;
-  font-family: 'DM Mono', monospace; font-size: 10px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+  font-family: 'DM Mono', monospace; font-size: 9px; padding: 3px 6px; border-radius: 6px; cursor: pointer;
 }
 
-.canvas-controls { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-bottom: .85rem; align-items: end; }
-.canvas-slider-group { display: flex; flex-direction: column; gap: 5px; min-width: 130px; }
-.canvas-slider-group label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.canvas-slider-group input[type=range] { accent-color: var(--accent-blue); }
-.canvas-bw-toggle { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
+.canvas-controls { display: flex; flex-direction: column; gap: .5rem; margin-bottom: .6rem; width: 100%; }
+.canvas-slider-group { display: flex; align-items: center; gap: 8px; }
+.canvas-slider-group label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); width: 62px; flex-shrink: 0; }
+.canvas-slider-group input[type=range] { accent-color: var(--accent-blue); flex: 1; }
+.canvas-bw-toggle { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text); }
 
-.img-filename-preview { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent-blue); word-break: break-all; }
+.img-filename-preview { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent-blue); word-break: break-all; }
 </style>
 </head>
 <body>
@@ -174,14 +175,15 @@
 
   <section class="tab-section" id="tab-export">
     <div class="export-hint">
-      Pro Bild eine Canvas anlegen, Bild reinziehen, mit der Maus verschieben und mit dem Zoom-Regler skalieren.
-      Effekte gelten nur für das jeweilige Bild. Nichts wird hochgeladen — alles läuft lokal im Browser.
+      „+ Neues Projekt" legt automatisch alle 5 Bildgrößen an (Poster, Backdrop, Thumb, Banner, Logo).
+      Name einmal pro Projekt eintragen — gilt für alle Exporte davon. Bild pro Größe reinziehen, verschieben,
+      zoomen, Effekte einstellen. Nichts wird hochgeladen, alles läuft lokal im Browser.
     </div>
     <div class="export-toolbar">
-      <button class="ghost-btn" id="addCanvasBtn">+ Neue Canvas</button>
+      <button class="ghost-btn" id="addProjectBtn">+ Neues Projekt</button>
       <button class="submit-btn" id="exportAllBtn" disabled>Alle exportieren</button>
     </div>
-    <div id="canvasList"><div class="lib-empty">Noch keine Canvas hinzugefügt.</div></div>
+    <div id="projectList"><div class="lib-empty">Noch kein Projekt angelegt.</div></div>
   </section>
 
   <footer>
@@ -285,25 +287,32 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
-/* ── Bild-Export: Canvas-Editor (rein clientseitig, nichts wird hochgeladen) ── */
-const SIZE_PRESETS = {
-  poster:   { label: 'Poster (2:3) 1000×1500',    w: 1000, h: 1500 },
-  backdrop: { label: 'Backdrop (16:9) 1920×1080', w: 1920, h: 1080 },
-  thumb:    { label: 'Thumb (16:9) 1280×720',     w: 1280, h: 720 },
-  banner:   { label: 'Banner (5.4:1) 1000×185',   w: 1000, h: 185 },
-  logo:     { label: 'Logo 800×310',              w: 800,  h: 310 },
-  custom:   { label: 'Benutzerdefiniert',         w: 1000, h: 1000 },
-};
-const PREVIEW_MAX = 260;
+/* ── Bild-Export: Projekte mit fixen Templates (rein clientseitig) ── */
+const TEMPLATES = [
+  { key: 'poster',   label: 'Poster (2:3)',    w: 2000, h: 3000 },
+  { key: 'backdrop', label: 'Backdrop (16:9)', w: 3840, h: 2160 },
+  { key: 'thumb',    label: 'Thumb (16:9)',    w: 1280, h: 720 },
+  { key: 'banner',   label: 'Banner (5.4:1)',  w: 1000, h: 185 },
+  { key: 'logo',     label: 'Logo',            w: 800,  h: 310 },
+];
+const PREVIEW_MAX = 220;
 
-let canvasCards = [];
+let projects = [];
 
 function sanitizeName(name) {
   return (name || '').trim().replace(/[\/\\:*?"<>|]/g, '');
 }
 
-function filenameFor(card) {
-  const base = sanitizeName(card.name) || 'unbenannt';
+function findCard(cardId) {
+  for (const project of projects) {
+    const card = project.cards.find(c => c.id === cardId);
+    if (card) return { project, card };
+  }
+  return null;
+}
+
+function filenameFor(project, card) {
+  const base = sanitizeName(project.name) || 'unbenannt';
   return `${base}_${card.width}x${card.height}.png`;
 }
 
@@ -311,47 +320,38 @@ function filterString(card) {
   return `grayscale(${card.grayscale ? 100 : 0}%) contrast(${card.contrast}%) brightness(${card.brightness}%) saturate(${card.saturation}%)`;
 }
 
-function addCard() {
-  canvasCards.push({
+function addProject() {
+  projects.push({
     id: crypto.randomUUID(),
-    name: '', sizeKey: 'poster', width: SIZE_PRESETS.poster.w, height: SIZE_PRESETS.poster.h,
-    img: null, imgUrl: null, naturalW: 0, naturalH: 0,
-    scale: 1, offsetX: 0, offsetY: 0,
-    grayscale: false, contrast: 100, brightness: 100, saturation: 100,
+    name: '',
+    cards: TEMPLATES.map(t => ({
+      id: crypto.randomUUID(),
+      templateKey: t.key, label: t.label, width: t.w, height: t.h,
+      img: null, imgUrl: null, naturalW: 0, naturalH: 0,
+      scale: 1, offsetX: 0, offsetY: 0,
+      grayscale: false, contrast: 100, brightness: 100, saturation: 100,
+    })),
   });
-  renderCards();
+  renderProjects();
 }
 
-function cardHtml(card) {
+function cardHtml(project, card) {
   const aspect = card.width / card.height;
   const previewW = Math.min(PREVIEW_MAX, card.width);
   const previewH = previewW / aspect;
   return `
-    <div class="canvas-card">
-      <div class="canvas-card-header">
-        <input class="text-input canvas-name-input" data-name-id="${card.id}" placeholder="Name (z.B. Regisseur)" value="${escapeHtml(card.name)}">
-        <select class="text-input canvas-size-select" data-size-id="${card.id}">
-          ${Object.entries(SIZE_PRESETS).map(([key, p]) => `<option value="${key}" ${card.sizeKey === key ? 'selected' : ''}>${p.label}</option>`).join('')}
-        </select>
-        ${card.sizeKey === 'custom' ? `
-          <div class="canvas-custom-size">
-            <input class="text-input" type="number" min="10" data-custom-w-id="${card.id}" value="${card.width}">
-            <span class="lib-muted">×</span>
-            <input class="text-input" type="number" min="10" data-custom-h-id="${card.id}" value="${card.height}">
-          </div>` : ''}
-        <button class="delete-btn" data-remove-card-id="${card.id}" title="Canvas entfernen">✕</button>
-      </div>
-
+    <div class="tmpl-card">
+      <div class="tmpl-label">${card.label} <span class="lib-muted">${card.width}×${card.height}</span></div>
       <div class="canvas-frame ${card.img ? '' : 'empty'}" data-frame-id="${card.id}" style="width:${previewW}px;height:${previewH}px" ${card.img ? '' : `data-empty-trigger="${card.id}"`}>
         ${card.img ? `
           <img data-img-id="${card.id}" src="${card.imgUrl}" style="filter:${filterString(card)}">
-          <button class="canvas-replace-btn" data-replace-id="${card.id}">Bild ersetzen</button>
+          <button class="canvas-replace-btn" data-replace-id="${card.id}">ersetzen</button>
         ` : 'Bild hierher ziehen<br>oder klicken'}
       </div>
       <input type="file" accept="image/*" style="display:none" data-file-input-id="${card.id}">
 
       ${card.img ? `
-      <div class="canvas-controls">
+      <div class="canvas-controls" style="width:${previewW}px">
         <div class="canvas-slider-group">
           <label>Zoom</label>
           <input type="range" min="0.3" max="3" step="0.01" value="${card.scale}" data-zoom-id="${card.id}">
@@ -361,11 +361,11 @@ function cardHtml(card) {
           <input type="range" min="0" max="200" value="${card.contrast}" data-contrast-id="${card.id}">
         </div>
         <div class="canvas-slider-group">
-          <label>Helligkeit</label>
+          <label>Hell.</label>
           <input type="range" min="0" max="200" value="${card.brightness}" data-brightness-id="${card.id}">
         </div>
         <div class="canvas-slider-group">
-          <label>Sättigung</label>
+          <label>Sätt.</label>
           <input type="range" min="0" max="200" value="${card.saturation}" data-saturation-id="${card.id}">
         </div>
         <label class="canvas-bw-toggle">
@@ -373,7 +373,21 @@ function cardHtml(card) {
         </label>
       </div>` : ''}
 
-      <div class="img-filename-preview" data-filename-id="${card.id}">${filenameFor(card)}</div>
+      <div class="img-filename-preview" data-filename-id="${card.id}">${filenameFor(project, card)}</div>
+    </div>
+  `;
+}
+
+function projectHtml(project) {
+  return `
+    <div class="project-card">
+      <div class="project-header">
+        <input class="text-input project-name-input" data-project-name-id="${project.id}" placeholder="Name (z.B. Regisseur)" value="${escapeHtml(project.name)}">
+        <button class="delete-btn" data-remove-project-id="${project.id}" title="Projekt entfernen">✕</button>
+      </div>
+      <div class="tmpl-grid">
+        ${project.cards.map(card => cardHtml(project, card)).join('')}
+      </div>
     </div>
   `;
 }
@@ -422,20 +436,22 @@ function applyImageFilter(card) {
   if (imgEl) imgEl.style.filter = filterString(card);
 }
 
-function renderCards() {
-  const el = document.getElementById('canvasList');
+function renderProjects() {
+  const el = document.getElementById('projectList');
   const exportBtn = document.getElementById('exportAllBtn');
-  if (!canvasCards.length) {
-    el.innerHTML = '<div class="lib-empty">Noch keine Canvas hinzugefügt.</div>';
+  if (!projects.length) {
+    el.innerHTML = '<div class="lib-empty">Noch kein Projekt angelegt.</div>';
     exportBtn.disabled = true;
     return;
   }
-  exportBtn.disabled = !canvasCards.some(c => c.img);
-  el.innerHTML = canvasCards.map(cardHtml).join('');
-  canvasCards.forEach(card => {
-    const frameEl = document.querySelector(`[data-frame-id="${card.id}"]`);
-    if (frameEl) attachFrameDrag(frameEl, card);
-    if (card.img) applyImageTransform(card);
+  exportBtn.disabled = !projects.some(p => p.cards.some(c => c.img));
+  el.innerHTML = projects.map(projectHtml).join('');
+  projects.forEach(project => {
+    project.cards.forEach(card => {
+      const frameEl = document.querySelector(`[data-frame-id="${card.id}"]`);
+      if (frameEl) attachFrameDrag(frameEl, card);
+      if (card.img) applyImageTransform(card);
+    });
   });
 }
 
@@ -449,14 +465,14 @@ function loadImageIntoCard(card, file) {
     card.naturalW = im.naturalWidth;
     card.naturalH = im.naturalHeight;
     card.scale = 1; card.offsetX = 0; card.offsetY = 0;
-    renderCards();
+    renderProjects();
   };
   im.src = url;
 }
 
-const canvasList = document.getElementById('canvasList');
+const projectList = document.getElementById('projectList');
 
-canvasList.addEventListener('click', (e) => {
+projectList.addEventListener('click', (e) => {
   const emptyFrame = e.target.closest('[data-empty-trigger]');
   if (emptyFrame) {
     document.querySelector(`[data-file-input-id="${emptyFrame.dataset.emptyTrigger}"]`).click();
@@ -467,89 +483,69 @@ canvasList.addEventListener('click', (e) => {
     document.querySelector(`[data-file-input-id="${replaceBtn.dataset.replaceId}"]`).click();
     return;
   }
-  const removeBtn = e.target.closest('[data-remove-card-id]');
+  const removeBtn = e.target.closest('[data-remove-project-id]');
   if (removeBtn) {
-    const idx = canvasCards.findIndex(c => c.id === removeBtn.dataset.removeCardId);
+    const idx = projects.findIndex(p => p.id === removeBtn.dataset.removeProjectId);
     if (idx !== -1) {
-      if (canvasCards[idx].imgUrl) URL.revokeObjectURL(canvasCards[idx].imgUrl);
-      canvasCards.splice(idx, 1);
-      renderCards();
+      projects[idx].cards.forEach(c => { if (c.imgUrl) URL.revokeObjectURL(c.imgUrl); });
+      projects.splice(idx, 1);
+      renderProjects();
     }
   }
 });
 
-canvasList.addEventListener('change', (e) => {
+projectList.addEventListener('change', (e) => {
   if (e.target.matches('[data-file-input-id]')) {
-    const card = canvasCards.find(c => c.id === e.target.dataset.fileInputId);
+    const found = findCard(e.target.dataset.fileInputId);
     const file = e.target.files[0];
-    if (card && file) loadImageIntoCard(card, file);
-    return;
-  }
-  if (e.target.matches('[data-size-id]')) {
-    const card = canvasCards.find(c => c.id === e.target.dataset.sizeId);
-    if (!card) return;
-    card.sizeKey = e.target.value;
-    if (card.sizeKey !== 'custom') {
-      card.width = SIZE_PRESETS[card.sizeKey].w;
-      card.height = SIZE_PRESETS[card.sizeKey].h;
-    }
-    card.scale = 1; card.offsetX = 0; card.offsetY = 0;
-    renderCards();
-    return;
-  }
-  if (e.target.matches('[data-custom-w-id]') || e.target.matches('[data-custom-h-id]')) {
-    const isW = e.target.matches('[data-custom-w-id]');
-    const card = canvasCards.find(c => c.id === (isW ? e.target.dataset.customWId : e.target.dataset.customHId));
-    if (!card) return;
-    const val = Math.max(10, parseInt(e.target.value, 10) || 10);
-    if (isW) card.width = val; else card.height = val;
-    card.scale = 1; card.offsetX = 0; card.offsetY = 0;
-    renderCards();
+    if (found && file) loadImageIntoCard(found.card, file);
     return;
   }
   if (e.target.matches('[data-bw-id]')) {
-    const card = canvasCards.find(c => c.id === e.target.dataset.bwId);
-    if (!card) return;
-    card.grayscale = e.target.checked;
-    applyImageFilter(card);
+    const found = findCard(e.target.dataset.bwId);
+    if (!found) return;
+    found.card.grayscale = e.target.checked;
+    applyImageFilter(found.card);
   }
 });
 
-canvasList.addEventListener('input', (e) => {
-  if (e.target.matches('[data-name-id]')) {
-    const card = canvasCards.find(c => c.id === e.target.dataset.nameId);
-    if (!card) return;
-    card.name = e.target.value;
-    const preview = document.querySelector(`[data-filename-id="${card.id}"]`);
-    if (preview) preview.textContent = filenameFor(card);
+projectList.addEventListener('input', (e) => {
+  if (e.target.matches('[data-project-name-id]')) {
+    const project = projects.find(p => p.id === e.target.dataset.projectNameId);
+    if (!project) return;
+    project.name = e.target.value;
+    project.cards.forEach(card => {
+      const preview = document.querySelector(`[data-filename-id="${card.id}"]`);
+      if (preview) preview.textContent = filenameFor(project, card);
+    });
     return;
   }
   if (e.target.matches('[data-zoom-id]')) {
-    const card = canvasCards.find(c => c.id === e.target.dataset.zoomId);
-    if (!card) return;
-    card.scale = parseFloat(e.target.value);
-    applyImageTransform(card);
+    const found = findCard(e.target.dataset.zoomId);
+    if (!found) return;
+    found.card.scale = parseFloat(e.target.value);
+    applyImageTransform(found.card);
     return;
   }
   if (e.target.matches('[data-contrast-id]')) {
-    const card = canvasCards.find(c => c.id === e.target.dataset.contrastId);
-    if (!card) return;
-    card.contrast = parseInt(e.target.value, 10);
-    applyImageFilter(card);
+    const found = findCard(e.target.dataset.contrastId);
+    if (!found) return;
+    found.card.contrast = parseInt(e.target.value, 10);
+    applyImageFilter(found.card);
     return;
   }
   if (e.target.matches('[data-brightness-id]')) {
-    const card = canvasCards.find(c => c.id === e.target.dataset.brightnessId);
-    if (!card) return;
-    card.brightness = parseInt(e.target.value, 10);
-    applyImageFilter(card);
+    const found = findCard(e.target.dataset.brightnessId);
+    if (!found) return;
+    found.card.brightness = parseInt(e.target.value, 10);
+    applyImageFilter(found.card);
     return;
   }
   if (e.target.matches('[data-saturation-id]')) {
-    const card = canvasCards.find(c => c.id === e.target.dataset.saturationId);
-    if (!card) return;
-    card.saturation = parseInt(e.target.value, 10);
-    applyImageFilter(card);
+    const found = findCard(e.target.dataset.saturationId);
+    if (!found) return;
+    found.card.saturation = parseInt(e.target.value, 10);
+    applyImageFilter(found.card);
   }
 });
 
@@ -570,20 +566,25 @@ function renderCardToBlob(card) {
   });
 }
 
-document.getElementById('addCanvasBtn').addEventListener('click', addCard);
+document.getElementById('addProjectBtn').addEventListener('click', addProject);
 
 document.getElementById('exportAllBtn').addEventListener('click', async () => {
-  const withImages = canvasCards.filter(c => c.img);
-  const blobs = await Promise.all(withImages.map(renderCardToBlob));
+  const jobs = [];
+  projects.forEach(project => {
+    project.cards.forEach(card => {
+      if (card.img) jobs.push({ project, card });
+    });
+  });
+  const blobs = await Promise.all(jobs.map(j => renderCardToBlob(j.card)));
   blobs.forEach((blob, i) => {
     setTimeout(() => {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = filenameFor(withImages[i]);
+      a.download = filenameFor(jobs[i].project, jobs[i].card);
       document.body.appendChild(a);
       a.click();
       a.remove();
-    }, i * 300);
+    }, i * 250);
   });
 });
 
